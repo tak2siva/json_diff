@@ -10,7 +10,6 @@
     <script type="text/javascript" src="difflib.js"></script>
     <script type="text/javascript" src="jquery.min.js"></script>
     <script type="text/javascript" src="underscore.js"></script>
-    <!--<script type="text/javascript" src="worker.js"></script>-->
     <style type="text/css">
         body {
             font-size: 12px;
@@ -61,50 +60,7 @@
 
     <script type="text/javascript">
 
-        function diffUsingJS(viewType) {
-            "use strict";
-            var byId = function (id) { return document.getElementById(id); },
-                    base = difflib.stringAsLines(byId("baseText").value),
-                    newtxt = difflib.stringAsLines(byId("newText").value),
-                    sm = new difflib.SequenceMatcher(base, newtxt),
-                    opcodes = sm.get_opcodes(),
-                    diffoutputdiv = byId("diffoutput"),
-                    contextSize = byId("contextSize").value;
-
-            diffoutputdiv.innerHTML = "";
-            contextSize = contextSize || null;
-
-            diffoutputdiv.appendChild(diffview.buildView({
-                baseTextLines: base,
-                newTextLines: newtxt,
-                opcodes: opcodes,
-                baseTextName: "Base Text",
-                newTextName: "New Text",
-                contextSize: contextSize,
-                viewType: viewType
-            }));
-        }
-
-//        function sortByKeys2(obj){
-//            var orderedObj = {};
-//
-//            if(Array.isArray(obj)){
-//                _.each(obj, function(val, index){
-//                    obj[index] = sortByKeys(val);
-//                });
-//            } else {
-//                Object.keys(obj).sort().forEach(function (key) {
-//                    if(!!key || Array.isArray(obj[key]) || typeof(obj[key]) == "object"){
-////                        console.log("====================")
-////                        console.log(obj);
-//                        orderedObj[key] = sortByKeys(obj[key]);
-//                    } else{
-//                        orderedObj[key] = obj[key];
-//                    }
-//                });
-//            }
-//            return orderedObj;
-//        }
+        window.diffType = "assertDiff";
 
         function sortObject(object){
             var sortedObj = {};
@@ -136,10 +92,32 @@
             return prettyText;
         }
 
+        function getBaseText(){
+            var txt;
+            if(window.diffType == "assertDiff"){
+                txt =  $("#assertErrText").val();
+                return txt.match("Expected: (.*)")[0].replace("Expected: ","");
+            } else {
+                txt = $("#baseText").val();
+                return txt;
+            }
+        }
+
+        function getNeWText(){
+            var txt;
+            if(window.diffType == "assertDiff"){
+                txt = $("#assertErrText").val()
+                return txt.match("got: (.*)")[0].replace("got: ","");
+            } else {
+                txt = $("#newText").val();
+                return txt;
+            }
+        }
+
         function showAssertionDiff(viewType){
             var txt = $("#assertErrText").val();
-            var expected = txt.match("Expected: (.*)")[0].replace("Expected: ","");
-            var got = txt.match("got: (.*)")[0].replace("got: ","");
+            var expected = getBaseText();
+            var got = getNeWText();
 
             expected = difflib.stringAsLines(getPrettyText(expected));
             got = difflib.stringAsLines(getPrettyText(got));
@@ -164,18 +142,28 @@
             }));
         }
 
+        $(document).ready(function(){
+            $(".typeRadioBtn").click(function(e){
+                $(".assertion_error").toggle();
+                $(".json_diff").toggle();
+
+                window.diffType = e.target.id;
+            });
+        });
     </script>
 </head>
 <body>
-<div class="top" hidden="true">
-    <strong>Context size (optional):</strong> <input type="text" id="contextSize" value=""/>
+<div class="">
+    <input type="radio" class="typeRadioBtn" name="diffType" id="assertDiff" checked="checked"/> <label for="assertDiff">Assertion Diff</label>
+    <br/>
+    <input type="radio" class="typeRadioBtn" name="diffType" id="jsonDiff"/> <label for="jsonDiff">Json Diff</label>
 </div>
-
 <div class="assertion_error">
         <h2>java.lang.AssertionError:</h2>
         <textarea id="assertErrText"></textarea>
 </div>
-<div class="normal_diff" hidden="true">
+
+<div class="json_diff" hidden="true">
     <div class="textInput">
         <h2>Base Text</h2>
         <textarea id="baseText"></textarea>
@@ -185,6 +173,17 @@
         <textarea id="newText"></textarea>
     </div>
 </div>
+
+<!--<div class="normal_diff" hidden="true">-->
+    <!--<div class="textInput">-->
+        <!--<h2>Base Text</h2>-->
+        <!--<textarea id="baseText"></textarea>-->
+    <!--</div>-->
+    <!--<div class="textInput spacer">-->
+        <!--<h2>New Text</h2>-->
+        <!--<textarea id="newText"></textarea>-->
+    <!--</div>-->
+<!--</div>-->
 
 <div class="viewType">
     <input type="radio" name="_viewtype" id="sidebyside" onclick="showAssertionDiff(0);" /> <label for="sidebyside">Side by Side Diff</label>
