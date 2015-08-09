@@ -8,6 +8,7 @@
     <link rel="stylesheet" type="text/css" href="diffview.css"/>
     <script type="text/javascript" src="diffview.js"></script>
     <script type="text/javascript" src="difflib.js"></script>
+    <script type="text/javascript" src="sortJson.js"></script>
     <script type="text/javascript" src="jquery.min.js"></script>
     <script type="text/javascript" src="underscore.js"></script>
     <style type="text/css">
@@ -56,94 +57,16 @@
                 margin-right: auto;
                 width: 50%;
         }
+        .viewTypeBtn {
+            font-size: 16px;
+        }
     </style>
 
     <script type="text/javascript">
-
-        window.diffType = "assertDiff";
-
-        function sortObject(object){
-            var sortedObj = {};
-            var keys = _.keys(object);
-
-            keys = _.sortBy(keys, function(key){
-                return key;
-            });
-
-            _.each(keys, function(key) {
-                if(typeof object[key] == 'object' && !(object[key] instanceof Array)){
-                    sortedObj[key] = sortObject(object[key]);
-                } else {
-                    sortedObj[key] = object[key];
-                }
-            });
-
-            return sortedObj;
-        }
-
-        function getPrettyText(rawText){
-            var obj = rawText;
-            while(obj && typeof(obj) != "object")
-                    obj = JSON.parse(obj);
-
-            obj = sortObject(obj);
-
-            var prettyText = JSON.stringify(obj, null, 2);
-            return prettyText;
-        }
-
-        function getBaseText(){
-            var txt;
-            if(window.diffType == "assertDiff"){
-                txt =  $("#assertErrText").val();
-                return txt.match("Expected: (.*)")[0].replace("Expected: ","");
-            } else {
-                txt = $("#baseText").val();
-                return txt;
-            }
-        }
-
-        function getNeWText(){
-            var txt;
-            if(window.diffType == "assertDiff"){
-                txt = $("#assertErrText").val()
-                return txt.match("got: (.*)")[0].replace("got: ","");
-            } else {
-                txt = $("#newText").val();
-                return txt;
-            }
-        }
-
-        function showAssertionDiff(viewType){
-            var txt = $("#assertErrText").val();
-            var expected = getBaseText();
-            var got = getNeWText();
-
-            expected = difflib.stringAsLines(getPrettyText(expected));
-            got = difflib.stringAsLines(getPrettyText(got));
-
-            console.log(expected)
-            console.log(got)
-
-            var sm = new difflib.SequenceMatcher(expected, got);
-            var opcodes = sm.get_opcodes();
-
-            var outputDiv = $("#diffoutput");
-            outputDiv.html("");
-
-            outputDiv.append(diffview.buildView({
-                baseTextLines: expected,
-                newTextLines: got,
-                opcodes: opcodes,
-                baseTextName: "Expected",
-                newTextName: "Got",
-                contextSize: null,
-                viewType: viewType
-            }));
-        }
-
         $(document).ready(function(){
             $(".typeRadioBtn").click(function(e){
+                if(window.diffType == e.target.id)
+                    return false;
                 $(".assertion_error").toggle();
                 $(".json_diff").toggle();
 
@@ -153,7 +76,7 @@
     </script>
 </head>
 <body>
-<div class="">
+<div class="viewTypeBtn">
     <input type="radio" class="typeRadioBtn" name="diffType" id="assertDiff" checked="checked"/> <label for="assertDiff">Assertion Diff</label>
     <br/>
     <input type="radio" class="typeRadioBtn" name="diffType" id="jsonDiff"/> <label for="jsonDiff">Json Diff</label>
