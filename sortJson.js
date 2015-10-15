@@ -45,7 +45,7 @@ function getNeWText() {
     var txt;
     if (window.diffType == "assertDiff") {
         txt = $("#assertErrText").val()
-        return txt.match("got: (.*)")[0].replace("got: ", "");
+        return txt.match(/got: (.*)/i)[0].replace(/got: /i, "");
     } else {
         txt = $("#newText").val();
         return txt;
